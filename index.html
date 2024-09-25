@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>parkinglot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-nav .nav-link,
+        .navbar-nav .nav-link:focus, 
+        .navbar-nav .nav-link:hover {
+            font-weight: bold; 
+        }
+        .navbar {
+            justify-content: space-between;
+            position: fixed; 
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+        html,body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 100%;
+            height: 50%;
+            display: block;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        .update-section {
+            text-align: right;
+            margin: 10px;
+        }
+        .update-section span {
+            margin-left: 20px;
+            font-size: 0.9em;
+            color: grey;
+        }
+    </style>
+</head>
+<body>  
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><img src="iseoulu.png" height="70"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#map">지도</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#parking-info-section">주차장 정보</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#discount-info-section">감면 정보</a>
+                    </li>
+                </ul>
+            </div>
+            <form class="d-flex" role="search">
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- 지도 -->
+    <div id="map"></div>
+
+    <div class="update-section">
+        <button id="refresh-btn" class="btn btn-primary">검색</button>
+        <span id="last-updated">마지막 업데이트: </span>
+    </div>
+    <div id="parking-info-section" class="parking-info-section">
+        <h2 style="margin: 40px;">주차장 정보</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>주차장명</th>
+                <th>주소</th>
+                <th>총 주차면</th>
+                <th>현재 주차 차량수</th>
+                <th>유무료구분</th>
+                <th>평일 운영시간</th>
+                <th>주말 운영시간</th>
+                <th>공휴일 운영시간</th>
+                <th>기본 주차 요금<br>(단위:원)</th>
+                <th>추가 단위 요금<br>(단위:원)</th>
+            </tr>
+        </thead>
+        <tbody id="parking-info"></tbody> 
+    </table>
+    </div>
+
+    <!-- 주차장 감면 정보 섹션 -->
+    <div id="discount-info-section" class="discount-info">
+        <h2 style="margin: 40px;">주차장 감면 정보</h2>
+        <table class="discount-table">
+            <thead>
+                <tr>
+                    <th>감면 유형</th>
+                    <th>감면율(%)</th>
+                    <th>감면 유형</th>
+                    <th>감면율(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>장애인, 국가유공상이자,<br>고엽제후유증자, 의상자, 독립유공자</td>
+                    <td>80% 할인<br>(지하철환승주차장에 한하여<br>최초 3시간 주차요금 면제 후 80% 할인)</td>
+                    <td>5.18 민주유공 부상자</td>
+                    <td>1시간 이내 면제,이후 50% 할인</td>
+                </tr>
+                <tr>
+                    <td>경차, 저공해 자동차</td>
+                    <td>50% 할인><br>(지하철환승주차장에 한하여<br>최초 3시간 주차요금 면제 후 80% 할인)</td>
+                    <td>다둥이행복카드 소지자</td>
+                    <td>50% 할인<br>(2자녀 이상)</td>
+                </tr>
+                <tr>
+                    <td>외 교 관</td>
+                    <td>면제</td>
+                    <td>성실납세자<br>(서울특별시장 또는 국세청장이 교부한 성실납세증 표시 부착)</td>
+                    <td>면제<br>(발행일로부터 1년간)</td>
+                </tr>
+                <tr>
+                    <td>환승<br>(버스, 지하철 환승목적 주차)</td>
+                    <td>50% 할인<br>(녹색교통지역 제외)</td>
+                    <td>전기자동차</td>
+                    <td>1시간 이내 면제,이후 50% 할인<br>(충전 시에 한함)</td>
+                </tr>
+                <tr>
+                    <td>전통시장 이용자</td>
+                    <td>최초 2시간 50% 할인<br>(1급지 소재 주차장 제외)</td>
+                    <td>보훈보상대상자<br>(보훈보상대상자증)</td>
+                    <td>50% 할인</td>
+                </tr>
+                <tr>
+                    <td>참전유공자</td>
+                    <td>20% 할인</td>
+                    <td>병역명문가><br>예우대상자</td>
+                    <td>20% 할인</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=98c0e8b36dc83fba2baa608820069e77"></script>
+    <script>
+        const url = "http://openapi.seoul.go.kr:8088/74786b4e54646c6737375941644867/json/GetParkingInfo/1/1000/";
+        var mapContainer = document.getElementById('map');
+        var mapOption = {
+            center: new kakao.maps.LatLng(37.555956, 126.972311),
+            level: 5
+        };
+        var map = new kakao.maps.Map(mapContainer, mapOption);
+
+        // 마커 저장용
+        var markers = [];
+
+        function loadParkingData() {
+            fetch(url)
+                .then((res) => res.json())
+                .then((data) => {
+                    const parkingData = data.GetParkingInfo.row;
+                    const tableBody = document.getElementById("parking-info");
+                    tableBody.innerHTML = "";  //이전 데이터 삭제
+                    
+                    markers.forEach(marker => marker.setMap(null));
+                    markers = [];
+
+                    var bounds = map.getBounds();
+                    var swLatLng = bounds.getSouthWest();
+                    var neLatLng = bounds.getNorthEast();
+
+                    // 중복된 주차장명 필터링용 Set
+                    const addedParkingNames = new Set();
+
+                    parkingData.forEach((item) => {
+                        const lat = parseFloat(item.LAT);
+                        const lon = parseFloat(item.LOT);
+                        
+                        if (lat && lon && lat >= swLatLng.getLat() && lat <= neLatLng.getLat() &&
+                            lon >= swLatLng.getLng() && lon <= neLatLng.getLng()) {
+
+                            // 주차장명이 중복되었는지 체크
+                            if (addedParkingNames.has(item.PKLT_NM)) {
+                                return; // 참이면 스킵
+                            }
+                            addedParkingNames.add(item.PKLT_NM); // 중복 방지를 위해 주차장명 추가
+
+                            var marker = new kakao.maps.Marker({
+                                map: map,
+                                position: new kakao.maps.LatLng(lat, lon)
+                            });
+
+                            //인포윈도우
+                            var infowindow = new kakao.maps.InfoWindow({
+                                content: `<div style="padding:5px;">${item.PKLT_NM}</div>`
+                            });
+
+                            kakao.maps.event.addListener(marker, 'mouseover', function() {
+                                infowindow.open(map, marker);
+                            });
+
+                            kakao.maps.event.addListener(marker, 'mouseout', function() {
+                                infowindow.close();
+                            });
+
+                            markers.push(marker); //마커생성
+
+                            const row = document.createElement("tr");
+                            row.innerHTML = `
+                                <td>${item.PKLT_NM}</td>
+                                <td>${item.ADDR}</td>
+                                <td>${item.TPKCT}</td>
+                                <td>${item.NOW_PRK_VHCL_CNT}</td>
+                                <td>${item.PAY_YN_NM}</td>
+                                <td>${item.WD_OPER_BGNG_TM} - ${item.WD_OPER_END_TM}</td>
+                                <td>${item.WE_OPER_BGNG_TM} - ${item.WE_OPER_END_TM}</td>
+                                <td>${item.LHLDY_OPER_BGNG_TM} - ${item.LHLDY_OPER_END_TM}</td>
+                                <td>${item.BSC_PRK_CRG}</td>
+                                <td>${item.ADD_PRK_CRG}</td>
+                            `;
+                            tableBody.appendChild(row);
+                        }
+                    });
+
+                    const now = new Date();
+                    document.getElementById("last-updated").textContent = 
+                        `마지막 업데이트: ${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+                })
+                .catch((error) => {
+                    console.error("Error fetching data:", error);
+                });
+        }
+
+        loadParkingData(); //데이터 로딩
+
+        document.getElementById("refresh-btn").addEventListener("click", () => {
+            loadParkingData(); //검색 버튼 클릭하면 업데이트
+        });
+    </script>
+
+</body>
+</html>
